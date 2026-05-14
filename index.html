@@ -768,6 +768,25 @@ function loadState() {
   for (const c of s.cabor) s.weights[c.name] = { fisik:1/3, psi:1/3, skill:1/3 };
   return s;
 }
+async function loadCloudBackup() {
+  try {
+    const res = await fetch(
+      'https://raw.githubusercontent.com/wiganurlatifa/Performance-Analytics-System/main/backup_psa.json'
+    );
+
+    const data = await res.json();
+
+    if (data && data.athletes) {
+      STATE = migrateState(data);
+      render();
+
+      console.log('Backup cloud berhasil dimuat');
+    }
+
+  } catch(err) {
+    console.error('Gagal load backup:', err);
+  }
+}
 function saveState(opts) {
   opts = opts || {};
   if (!opts.fromRemote) {
@@ -4513,6 +4532,9 @@ function render() {
 
 /* =========== INIT =========== */
 STATE = loadState();
+
+loadCloudBackup();
+
 recomputeAll();
 render();
 
