@@ -769,23 +769,36 @@ function loadState() {
   return s;
 }
 async function loadCloudBackup() {
+
   try {
+
     const res = await fetch(
       'https://raw.githubusercontent.com/wiganurlatifa/Performance-Analytics-System/main/backup_psa.json'
     );
 
+    if (!res.ok) {
+      console.error('Gagal mengambil backup cloud');
+      return;
+    }
+
     const data = await res.json();
 
     if (data && data.athletes) {
+
       STATE = migrateState(data);
+
+      recomputeAll();
       render();
 
       console.log('Backup cloud berhasil dimuat');
     }
 
   } catch(err) {
+
     console.error('Gagal load backup:', err);
+
   }
+
 }
 function saveState(opts) {
   opts = opts || {};
