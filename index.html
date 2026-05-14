@@ -12,7 +12,7 @@
 <title>Performance Analytics System</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -832,10 +832,16 @@ function resetState() {
 */
 const SUPABASE_URL = 'https://yqugxlgfoieksffwzfxl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_vgW6NN2GPirCf_v6VKxeXw__RtLcpfW';
+
 let _supabase = null;
 let _supabaseChannel = null;
 let _cloudListeners = [];
 let _cloudSyncing = false;
+
+
+/* =========================
+   LOAD ATHLETES
+========================= */
 async function loadAthletesFromSupabase() {
 
   const { data, error } = await _supabase
@@ -874,25 +880,126 @@ async function loadAthletesFromSupabase() {
 
 }
 
-function onCloudSyncEvent(fn) { _cloudListeners.push(fn); }
-function emitCloudEvent(evt) {
-  _cloudListeners.forEach(fn => { try { fn(evt); } catch(e){} });
+
+/* =========================
+   MIGRASI BACKUP JSON
+========================= */
+async function migrateBackupJsonToSupabase() {
+
+  try {
+
+    const res = await fetch('./backup_psa.json');
+
+    const backup = await res.json();
+
+    if (!backup || !backup.athletes) {
+
+      console.error('Backup tidak valid');
+
+      return;
+
+    }
+
+    const athletes = backup.athletes.map(a => ({
+
+      id: a.id,
+
+      nama: a.nama || '',
+
+      cabor: a.cabor || '',
+
+      fisik: Number(a.fisik || 0),
+
+      psikologi: Number(a.psi || 0),
+
+      skill: Number(a.skill || 0),
+
+      jk: a.jk || '',
+
+      posisi: a.posisi || ''
+
+    }));
+
+    const { error } = await _supabase
+      .from('athletes')
+      .upsert(athletes);
+
+    if (error) {
+
+      console.error('Gagal migrasi:', error);
+
+      return;
+
+    }
+
+    console.log('Migrasi backup → Supabase berhasil');
+
+  } catch(err) {
+
+    console.error(err);
+
+  }
+
 }
 
-function initSupabase() {
-  if (_supabase) return _supabase;
-  if (typeof supabase === 'undefined') {
-    console.warn('Supabase SDK belum termuat (cek <script> CDN di <head>)');
-    return null;
-  }
-  try {
-    _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return _supabase;
-  } catch(e) {
-    console.error('Init Supabase gagal:', e);
-    return null;
-  }
+
+/* =========================
+   CLOUD EVENTS
+========================= */
+function onCloudSyncEvent(fn) {
+
+  _cloudListeners.push(fn);
+
 }
+
+function emitCloudEvent(evt) {
+
+  _cloudListeners.forEach(fn => {
+
+    try {
+
+      fn(evt);
+
+    } catch(e){}
+
+  });
+
+}
+
+
+/* =========================
+   INIT SUPABASE
+========================= */
+function initSupabase() {
+
+  if (_supabase) return _supabase;
+
+  if (typeof supabase === 'undefined') {
+
+    console.warn('Supabase SDK belum termuat');
+
+    return null;
+
+  }
+
+  try {
+
+    _supabase = supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    return _supabase;
+
+  } catch(e) {
+
+    console.error('Init Supabase gagal:', e);
+
+    return null;
+
+  }
+
+} 
 
 // Mapping: STATE.athletes ↔ Supabase row
 function athleteToRow(a) {
@@ -4589,7 +4696,40 @@ STATE = JSON.parse(JSON.stringify(DEFAULT_STATE));
 
 async function initializeApp() {
 
-  await loadAthletesFromSupabase();
+  // load backup json dulu
+  try {
+
+    const res = await fetch('./backup_psa.json');
+
+    const backup = await res.json();
+
+    // seluruh config sistem
+    STATE = backup;
+
+    console.log('Backup JSON loaded');
+
+  } catch(err) {
+
+    console.error('Gagal load backup JSON:', err);
+
+    STATE = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+  }
+
+  // init supabase
+  const sb = initSupabase();
+
+  if (sb) {
+
+  
+
+    // load athletes terbaru dari supabase
+    await loadAthletesFromSupabase();
+
+    // realtime sync
+    setupCloudRealtime();
+
+  }
 
   recomputeAll();
 
