@@ -836,6 +836,43 @@ let _supabase = null;
 let _supabaseChannel = null;
 let _cloudListeners = [];
 let _cloudSyncing = false;
+async function loadAthletesFromSupabase() {
+
+  const { data, error } = await _supabase
+    .from('athletes')
+    .select('*');
+
+  if (error) {
+
+    console.error('Gagal load athletes:', error);
+
+    return;
+
+  }
+
+  STATE.athletes = data.map(a => ({
+
+    id: a.id,
+
+    nama: a.nama || '',
+
+    cabor: a.cabor || '',
+
+    fisik: [Number(a.fisik || 0)],
+
+    psi: [Number(a.psikologi || 0)],
+
+    skill: [Number(a.skill || 0)],
+
+    jk: a.jk || '',
+
+    posisi: a.posisi || '',
+
+  }));
+
+  console.log('Athletes loaded from Supabase');
+
+}
 
 function onCloudSyncEvent(fn) { _cloudListeners.push(fn); }
 function emitCloudEvent(evt) {
@@ -4548,12 +4585,19 @@ function render() {
 }
 
 /* =========== INIT =========== */
-STATE = loadState();
+STATE = JSON.parse(JSON.stringify(DEFAULT_STATE));
 
-loadCloudBackup();
+async function initializeApp() {
 
-recomputeAll();
-render();
+  await loadAthletesFromSupabase();
+
+  recomputeAll();
+
+  render();
+
+}
+
+initializeApp();
 
 // VIEWER MODE detection: ?viewer=true di URL → tidak bisa edit
 // Default: visitor (non-admin) = viewer mode. Login admin untuk write access.
@@ -4571,10 +4615,16 @@ render();
 (function initCloud() {
   if (initSupabase()) {
     // Pull data atlet dari cloud (semua mode bisa pull)
-    cloudPull().then(() => {
-      // Subscribe realtime channel agar update otomatis
-      setupCloudRealtime();
-    }).catch(e => console.warn('Cloud init error:', e));
+    loadAthletesFromSupabase().then(() => {
+
+  recomputeAll();
+
+  render();
+
+  // realtime sync
+  setupCloudRealtime();
+
+}).catch(e => console.warn('Cloud init error:', e));
   }
 })();
 
