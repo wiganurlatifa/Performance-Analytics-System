@@ -1006,6 +1006,8 @@ function athleteToRow(a) {
   return {
     id: a.id,
     nama: a.nama || '',
+    tempat_lahir: a.tempat_lahir || '',
+    tanggal_lahir: a.tanggal_lahir || '',
     cabor: a.cabor || '',
     jk: a.jk || '',
     posisi: a.posisi || '',
@@ -1019,6 +1021,8 @@ function rowToAthlete(r) {
   return {
     id: r.id,
     nama: r.nama || '',
+    tempat_lahir: r.tempat_lahir || '',
+    tanggal_lahir: r.tanggal_lahir || '',
     cabor: r.cabor || '',
     jk: r.jk || '',
     posisi: r.posisi || '',
@@ -1887,6 +1891,8 @@ function importAthletesExcel() {
           const rawPosisi = r.posisi || r.Posisi || r.POSISI || '';
           STATE.athletes.push({
             id, nama:String(nama).trim(),
+            tempat_lahir: String(r.tempat_lahir || r.Tempat_Lahir || r.TEMPAT_LAHIR || '').trim(),
+            tanggal_lahir: String(r.tanggal_lahir || r.Tanggal_Lahir || r.TANGGAL_LAHIR || '').trim(),
             cabor:resolvedCabor,
             jk:String(r.jenis_kelamin||r.jk||'L').slice(0,1).toUpperCase(),
             fisik:Number(r.nilai_fisik||r.fisik)||0,
