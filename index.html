@@ -1814,6 +1814,17 @@ function editAthlete(a, defaultCabor) {
   const box = h('div', { className:'space-y-3' });
   box.appendChild(h('h3', { className:'font-bold text-lg' }, isNew ? 'Tambah Peserta' : 'Edit Peserta'));
   const nama = h('input', { className:'input', placeholder:'Nama', value:data.nama });
+  const tempatLahir = h('input', {
+  className:'input',
+  placeholder:'Tempat Lahir',
+  value:data.tempat_lahir || ''
+});
+
+const tanggalLahir = h('input', {
+  type:'date',
+  className:'input',
+  value:data.tanggal_lahir || ''
+});
   const caborSel = h('select', { className:'input' });
   STATE.cabor.forEach(c => caborSel.appendChild(h('option', { value:c.name, selected:c.name===data.cabor }, c.name)));
   const jkSel = h('select', { className:'input' });
@@ -1840,6 +1851,8 @@ function editAthlete(a, defaultCabor) {
   caborSel.addEventListener('change', refreshPositionField);
 
   box.appendChild(h('label', { className:'block text-sm' }, 'Nama', nama));
+  box.appendChild(h('label', { className:'block text-sm' }, 'Tempat Lahir', tempatLahir));
+  box.appendChild(h('label', { className:'block text-sm' }, 'Tanggal Lahir', tanggalLahir));
   box.appendChild(h('label', { className:'block text-sm' }, 'Cabor', caborSel));
   box.appendChild(h('label', { className:'block text-sm' }, 'Jenis Kelamin', jkSel));
   box.appendChild(posWrap);
@@ -1853,7 +1866,7 @@ function editAthlete(a, defaultCabor) {
     h('button', { className:'btn btn-primary', onClick:() => {
       if (!nama.value.trim()) return alert('Nama wajib diisi');
       const rec = {
-        nama:nama.value.trim(), cabor:caborSel.value, jk:jkSel.value,
+        nama:nama.value.trim(), tempat_lahir:tempatLahir.value.trim(), tanggal_lahir:tanggalLahir.value.trim(), cabor:caborSel.value, jk:jkSel.value,
         fisik:+fInp.value||0, psi:+pInp.value||0, skill:+sInp.value||0,
         posisi: caborHasPositions(caborSel.value) ? (posSel.value || '') : '',
       };
