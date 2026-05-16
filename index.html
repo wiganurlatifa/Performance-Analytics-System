@@ -1657,7 +1657,7 @@ function AthletesPage() {
   // Export tetap tersedia untuk visitor
   bar.appendChild(h('button', { className:'btn btn-secondary', onClick:() => {
     const ws = XLSX.utils.json_to_sheet(STATE.athletes.map(a => ({
-      nama:a.nama, cabor:a.cabor, jenis_kelamin:a.jk,
+      nama:a.nama, tempat_lahir: a.tempat_lahir || '', tanggal_lahir: a.tanggal_lahir || '',cabor:a.cabor, jenis_kelamin:a.jk,
       posisi:a.posisi || '',
       nilai_fisik:a.fisik, nilai_psikologi:a.psi, nilai_keterampilan:a.skill,
       nilai_akhir:a.nilai_akhir, rank_cabor:a.rank_cabor, rank_global:a.rank_global,
@@ -1780,10 +1780,10 @@ function AthletesPage() {
     h('td', { className:'td' }, a.jk),
     h('td', { className:'td' }, a.cabor),
     showPosisi && h('td', { className:'td' }, a.posisi || '-'),
-    h('td', { className:'td' }, (a.fisik||0).toFixed(2)),
-    h('td', { className:'td' }, (a.psi||0).toFixed(2)),
-    h('td', { className:'td' }, (a.skill||0).toFixed(2)),
-    h('td', { className:'td font-bold text-blue-700' }, (a.nilai_akhir||0).toFixed(2)),
+    h('td', { className:'td' }, (Number(a.fisik?.[0] ?? a.fisik ?? 0)).toFixed(2)),
+h('td', { className:'td' }, (Number(a.psi?.[0] ?? a.psi ?? 0)).toFixed(2)),
+h('td', { className:'td' }, (Number(a.skill?.[0] ?? a.skill ?? 0)).toFixed(2)),
+h('td', { className:'td font-bold text-blue-700' }, (Number(a.nilai_akhir ?? 0)).toFixed(2)),
     h('td', { className:'td' }, String(a.rank_cabor||'-')),
     h('td', { className:'td' },
       _isAdmin
@@ -2715,7 +2715,7 @@ function exportTestExcel(type) {
   });
 
   row.fisik_manual = a.fisik_manual ?? '';
-  row.skor_fisik = +(a.fisik || 0).toFixed(2);
+  row.skor_fisik = +(Number(a.fisik?.[0] ?? a.fisik ?? 0)).toFixed(2);
 
   return row;
 
@@ -2734,7 +2734,7 @@ function exportTestExcel(type) {
         row[d.key + '_pct'] = a.psi_details?.[d.key + '_pct'] ?? '';
       });
       row.psi_manual = a.psi_manual ?? '';
-      row.skor_psi = +(a.psi||0).toFixed(2);
+      row.skor_psi = +(Number(a.psi?.[0] ?? a.psi ?? 0)).toFixed(2);
       return row;
     });
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -2749,7 +2749,7 @@ function exportTestExcel(type) {
         const row = { nama:a.nama, jk:a.jk, cabor:a.cabor };
         fields.forEach(f => { row[f] = a.skill_details?.[f] ?? ''; });
         row.skill_manual = a.skill_manual ?? '';
-        row.skor_skill = +(a.skill||0).toFixed(2);
+        row.skor_skill = +(Number(a.skill?.[0] ?? a.skill ?? 0)).toFixed(2);
         return row;
       });
       const ws = XLSX.utils.json_to_sheet(rows);
